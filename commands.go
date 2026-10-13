@@ -5,13 +5,13 @@ import (
 	"os"
 )
 
-func commandExit(conf *config) error {
+func commandExit(conf *config, args []string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *config) error {
+func commandHelp(conf *config, args []string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Print("\nUsage of the Pokedex\nList of commands:\n\n")
 	commands := getCommands()
@@ -22,7 +22,7 @@ func commandHelp(conf *config) error {
 	return nil
 }
 
-func commandMap(cfg *config) error {
+func commandMap(cfg *config, args []string) error {
 	locations, err := cfg.pokeapiClient.ListLocationAreas(cfg.nextURL)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func commandMap(cfg *config) error {
 	return nil
 }
 
-func commandMapb(cfg *config) error {
+func commandMapb(cfg *config, args []string) error {
 	if cfg.prevURL == nil {
 		fmt.Println("you're on the first page")
 		return nil
@@ -55,4 +55,24 @@ func commandMapb(cfg *config) error {
 		fmt.Println(loc.Name)
 	}
 	return nil
+}
+
+func commandExplore(conf *config, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("Usage: explore <location-area>")
+	}
+
+	payload, err := conf.pokeapiClient.GetLocationArea(args[0])
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Exploring %s...\n", payload.Name)
+	fmt.Println("[+]Found Pokemon:")
+	for _, pokemon := range payload.PokemonEncounters {
+		fmt.Printf("-> %s\n", pokemon.Pokemon.Name)
+	}
+
+	return nil
+
 }

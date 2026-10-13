@@ -18,26 +18,26 @@ func startRepl(conf *config) {
 	for {
 		fmt.Print("Pokedex > ")
 
-		if scanner.Scan() {
-			input := scanner.Text()
-			words := cleanInput(input)
-
-			if len(words) == 0 {
-				continue
+		if !scanner.Scan() {
+			if err := scanner.Err(); err != nil {
+				fmt.Fprintln(os.Stderr, "Input error:", err)
 			}
-
-			commandName := words[0]
-
-			cmd, ok := getCommands()[commandName]
-			if ok {
-				cmd.callback(conf)
-			} else {
-				fmt.Printf("Input not valid: %s\n", commandName)
-			}
-
+			return
 		}
-		if err := scanner.Err(); err != nil {
-			fmt.Fprintln(os.Stderr, "Input error:", err)
+
+		words := cleanInput(scanner.Text())
+		if len(words) == 0 {
+			continue
+		}
+
+		commandName := words[0]
+		cmd, ok := getCommands()[commandName]
+		if !ok {
+			fmt.Printf("Input not valid: %s\n", commandName)
+			continue
+		}
+		if err := cmd.callback(conf, words[1:]); err != nil {
+			fmt.Println("Error:", err)
 		}
 	}
 }
