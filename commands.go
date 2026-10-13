@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
+
+	"github.com/BashCtl/pokedex-cli/internal/pokeapi"
 )
 
 func commandExit(conf *config, args []string) error {
@@ -75,4 +79,47 @@ func commandExplore(conf *config, args []string) error {
 
 	return nil
 
+}
+
+var catchRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+func calculateCatchChance(baseExperience int) int {
+	if baseExperience <= 0 {
+		return 90
+	}
+
+	chance := 100 - (baseExperience / 3)
+	if chance < 20 {
+		return 20
+	}
+	if chance > 90 {
+		return 90
+	}
+	return chance
+}
+
+func commandCatch(conf *config, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: catch <pokemon>")
+	}
+
+	pokemonName := args[0]
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
+
+	pokemon, err := conf.pokeapiClient.GetPokemon(pokemonName)
+	if err != nil {
+		return err
+	}
+
+	if catchRand.Intn(100) < calculateCatchChance(pokemon.BaseExperience) {
+		if conf.pokedex == nil {
+			conf.pokedex = make(map[string]pokeapi.Pokemon)
+		}
+		conf.pokedex[pokemon.Name] = pokemon
+		fmt.Printf("%s was caught!\n", pokemon.Name)
+		return nil
+	}
+
+	fmt.Printf("%s escaped!\n", pokemon.Name)
+	return nil
 }
