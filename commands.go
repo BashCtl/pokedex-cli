@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/BashCtl/pokedex-cli/internal/pokeapi"
@@ -117,9 +118,57 @@ func commandCatch(conf *config, args []string) error {
 		}
 		conf.pokedex[pokemon.Name] = pokemon
 		fmt.Printf("%s was caught!\n", pokemon.Name)
+		fmt.Println("You may now inspect it with the inspect command.")
 		return nil
 	}
 
 	fmt.Printf("%s escaped!\n", pokemon.Name)
+	return nil
+}
+
+func commandPokedex(conf *config, args []string) error {
+	if len(args) > 0 {
+		return fmt.Errorf("usage: pokedex")
+	}
+
+	fmt.Println("Your Pokedex:")
+	for _, name := range caughtPokemonNames(conf.pokedex) {
+		fmt.Printf(" - %s\n", name)
+	}
+	return nil
+}
+
+func caughtPokemonNames(pokedex map[string]pokeapi.Pokemon) []string {
+	names := make([]string, 0, len(pokedex))
+	for name := range pokedex {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func commandInspect(cfg *config, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: inspect <pokemon>")
+	}
+
+	pokemon, exists := cfg.pokedex[args[0]]
+	if !exists {
+		fmt.Println("you have not caught that pokemon")
+		return nil
+	}
+
+	fmt.Printf("Name: %s\n", pokemon.Name)
+	fmt.Printf("Height: %d\n", pokemon.Height)
+	fmt.Printf("Weight: %d\n", pokemon.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range pokemon.Stats {
+		fmt.Printf("  -%s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, pokemonType := range pokemon.Types {
+		fmt.Printf("  - %s\n", pokemonType.Type.Name)
+	}
+
 	return nil
 }
