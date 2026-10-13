@@ -14,11 +14,14 @@ const baseURL = "https://pokeapi.co/api/v2"
 type Client struct {
 	httpClient http.Client
 	cache      *pokecache.Cache
+	baseURL    string
 }
 
 func NewClient(timeout time.Duration) Client {
 	return Client{httpClient: http.Client{Timeout: timeout},
-		cache: pokecache.NewCache(timeout)}
+		cache:   pokecache.NewCache(timeout),
+		baseURL: baseURL,
+	}
 }
 func (c *Client) getBody(url string) ([]byte, error) {
 	if body, ok := c.cache.Get(url); ok {
@@ -66,7 +69,7 @@ type LocationAreaDetails struct {
 }
 
 func (c *Client) ListLocationAreas(pageURL *string) (LocationAreasResp, error) {
-	url := baseURL + "/location-area"
+	url := c.baseURL + "/location-area"
 	if pageURL != nil {
 		url = *pageURL
 	}
@@ -84,7 +87,7 @@ func (c *Client) ListLocationAreas(pageURL *string) (LocationAreasResp, error) {
 }
 
 func (c *Client) GetLocationArea(name string) (LocationAreaDetails, error) {
-	url := fmt.Sprintf("%s/location-area/%s", baseURL, name)
+	url := fmt.Sprintf("%s/location-area/%s", c.baseURL, name)
 	body, err := c.getBody(url)
 	if err != nil {
 		return LocationAreaDetails{}, err
@@ -122,7 +125,7 @@ type Pokemon struct {
 }
 
 func (c *Client) GetPokemon(name string) (Pokemon, error) {
-	url := fmt.Sprintf("%s/pokemon/%s", baseURL, name)
+	url := fmt.Sprintf("%s/pokemon/%s", c.baseURL, name)
 	body, err := c.getBody(url)
 	if err != nil {
 		return Pokemon{}, err
